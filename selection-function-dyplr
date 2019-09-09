@@ -1,0 +1,239 @@
+# ASSIGNMENT 3
+
+# This is the Third assignment for the IMC 461 data management course
+
+# In this assignment you will use basic R functions, the concepts you've learnt about control flow and functions, and
+# dplyr!
+
+# You are expected to hand in two documents before the deadline:
+#***** 1. The completed R script *********
+#***** 2. A word or a pfd document that includes:******
+# 1. The output of: head, tail, str, nrow and ncol from your original table of part1
+# 2. The table of basic descriptive statistics
+# 3. The output of: head(zip_AvePrice) and a small discussion on zipcodes and average prices
+# 4. Screen shot of your ggplot
+# 5. Output of your function with the function call of: best_house(3,1980)
+
+
+########################################### INTRODUCTION ###################################################
+
+# Download the file kc_house_data.csv from Canvas in a directory that will serve as your working directory. When you
+# start up RStudio make sure to change your working directory to the directory where you downloaded the data.
+
+# The data for this assignment describes house sales, between 2014-05-02 to 2015-05-24 in King County, USA. 
+# The county is located in the U.S. state of Washington. King is the most populous county in Washington, 
+# and the 13th-most populous in the United States.
+# The data includes 15 house features including the price and has an id column, which uniquely identifies each house.
+# The data has information on 10,000 houses.
+
+# This is the data dictionary:
+# id: unique id of each house
+# date: Date house was sold
+# price: Price which the house was sold
+# bedrooms: Number of Bedrooms/House
+# bathrooms: Number of bathrooms/House
+# sqft_living: square footage of the home
+# sqft_lot: square footage of the lot
+# floorsTotal: floors (levels) in house
+# waterfront: House which has a view to a waterfront
+# view: Has been viewed
+# condition: How good the condition is (Overall )
+# grade: overall grade given to the housing unit, based on King County grading system
+# sqft_above: square footage of house apart from basement
+# sqft_basement: square footage of the basement
+# yr_built: Built Year
+# yr_renovated: Year when house was renovated
+# zipcode: zip
+
+
+########################################### PART 1 ###################################################
+# In this section, you will play with your data to get to know it better! Use all the base R function
+# you have learnt so far to get a wholesome idea of the data you are dealing with.
+
+# Read your data and use head, tail, str, nrow and ncol functions to get a better idea of the dimensions and 
+# structure of it. 
+# (1 points)
+
+library(sqldf)
+install.packages("tidyverse")
+library(tidyverse) 
+
+house <- # your code, reading the file.
+setwd("~/Desktop/NU/NU2/data visualization/assignment 3")
+house <- read.csv("kc_house_data.csv", header = TRUE)
+# Change the date varibale to class Date.
+house$date <- as.Date(as.character(house$date), "%Y%m%d")
+house
+
+
+# calculate basic descriptive statistics including average, standard deviation, minimum and maximum of 
+# price, bedrooms, bathrooms, sqft_living, condition, yr_built
+# Create a table of all these statistics for each of the varibales I mentioned and include the table
+# In your pdf writeup.
+
+summary(house)
+house_summary_1 <- data.frame(house$price, house$bedrooms, house$bathrooms, house$sqft_living, house$condition, house$yr_built)
+house_summary_1
+
+mean <- apply(house_summary_1, 2, mean)
+mean
+sd<-apply(house_summary_1,2,sd)
+sd
+min<-apply(house_summary_1,2,min)
+min
+max<-apply(house_summary_1,2,max)
+max
+
+housesummary <- data.frame(matrix(c(mean, sd, min, max), nrow = 4, ncol = 6, byrow = TRUE))
+housesummary
+rm(house_summary_1)
+rownames(housesummary)<-c("mean", "sd", "min", "max")
+colnames(housesummary)<-c("price", "bedrooms", "bathrooms", "sqft_living","condition","yr_built")
+housesummary
+
+# Your table should look like this:
+#       price	  bedrooms	 bathrooms	  sqft_living	  condition    yr_built
+# mean	
+# std	
+# min	
+# max	
+
+#(4 points)
+
+
+########################################### PART 2 ###################################################
+
+# Now that you have a better idea of what your data is about, let's have a closer look at it with dplyr verbs!
+
+# 1. The first question that the real estate company is really interested in is how the price of houses
+# in different neighborhoods vary! They wanted to be able to pin point affordable neighborhoods vs. places 
+# that are exclusively for luxury living. 
+# Answer their first question by creating a table that has the number of houses and average of prices per each zip code.
+# Your table should have three columns, zipcode,  house_count, and average_price
+# In your writeup, talk about the most interesting zip codes you have found in your new table, for example, most luxurious, etc.
+# (5 points)
+
+zip_AvePrice <-  # Your code
+zip_AvePrice <- house %>% 
+  group_by(zipcode)  %>% 
+  summarize(house_count=n(),
+            average_price=mean(price)) 
+head(zip_AvePrice)
+
+#myoutput
+#zipcode house_count average_price
+<int>       <int>         <dbl>
+1   98001         167       283322.
+2   98002          82       237405.
+3   98003         135       304370.
+4   98004         143      1357570.
+5   98005          76       833806.
+6   98006         242       823519.
+
+# 2. The real estate company wants to have an overall view on the average prices of houses sold each month.
+# This will give them a better image of the real estate market at each month in King county over the period of 2014-05-02 to 2015-05-24.
+# I have already created a new varibale called "month" from the variable date. Run the code and it will add it to your table. 
+# To address their request, create a new table from house dataset that has the average of house prices 
+# in each month. Your new table should have two columns, month and avg_price
+# Now, using ggplot, plot a basic line plot that has month on the x-axis and avg_price on y_axis. 
+# (5 points)
+
+house <- house %>% mutate(month = format(date, "%m"))
+house
+house_period<-subset(house, date>="2014-05-02"&date<="2015-05-24")
+house_period
+
+ price_year <- house_period %>%
+    group_by(month) %>% 
+  summarize(
+    avg_price = mean(price)
+  )
+
+ price_year <- house %>%
+  
+   group_by(month) %>% 
+   filter(house, date>="2014-05-02", date<="2015-05-24")
+   summarize(
+     avg_price = mean(price)
+   )
+   house
+price_year
+head(price_year)
+
+class(house$month)
+class(house$avg_price)
+
+ggplot1<-ggplot(price_year, aes(x=month, y=avg_price, group=1))+geom_line()
+ggplot1
+
+# write your ggplot R command here
+
+########################################### PART 3 ###################################################
+
+# The real estate company wants to have a better access to their best houses in their database! 
+# They want to have a functionality that is easy and reusable to extract the ID of the best houses according to
+# variable "condition", when they input the number of bedrooms and the year house was built.
+
+# Write a function called best_house
+# The function takes two arguments: bed and year: The number of bedrooms(bedrooms) and built year (yr_built)
+# This function reads the kc_house_data.csv file and returns a vector with the id of the house that has 
+# the best (i.e., highest) condition for the specified number of bedrooms and year built.
+
+# If the user calls the function with number of bedrooms that is not in the dataset, or is invalid, the function would
+# return an empty vector as:
+
+# For example, best_house(34,1999): We do not have 34 bedrooms house so the result would return:
+# This is the output: numeric(0)
+
+# Hint: You can create a new table from house table inside your function that has only the rows with your desired number
+# of bedrooms and built year with dplyr functions
+
+# Note: we want all the houses with the highest condition score, for example, there are 6 two-bedroom houses built in 1999
+# that have condition == 3, which is highest for that case. We want the function to return id of all 6 houses.
+# For example, best_house(2,1999)
+# Should return:
+
+#   id
+# 1 9268200550
+# 2 2026049125
+# 3 2887970040
+# 4 4340610080
+# 5 1453602313
+# 6 1972200382
+
+#(5 points)
+
+best_house <- function(bedrooms, year){
+  if
+    (bedrooms %in% house$bedrooms & year %in% house$yr_built)
+  {
+    x<-house[house$bedrooms==bedrooms & house$yr_built == year]
+    y<-x%>% filter( condition == max(condition))
+    id<-house$id
+  select(y, id)}
+  }
+
+
+best_house(2, 1999)
+
+
+# Bonus point:
+# Write the same function but now with an if else statement inside it that would print an error message when the number of bedrooms or year is
+# invalid. 
+# Hint: Use already existing function stop() in your function
+# To know more about stop(), do ?stop
+# (2 point)
+# These two points will be added to your assignment3 grade, if your grade is less than 20. If not, I will adjust these points in
+# your final grade.
+best_house <- function(bed, year){
+  if(bed %in% house$bedrooms & year %in% house$yr_built){
+    x <- house[house$bedrooms == bed & house$yr_built == year,]
+    y <- x %>%
+      filter(condition == max(condition))
+    select(y, id)
+  } else {
+    stop("number of bedrooms or year is invalid!")
+  }
+}
+
+best_house(2,1999)

@@ -1,0 +1,191 @@
+# ASSIGNMENT 2
+
+# This is the second assignment for the IMC 461 course
+
+# Caselet in a nutshell
+
+# On the regular days of Shopco (when there is no experiment),
+# Shopco collects engagement data from the consumers in addition to consumer and sales  
+# data (consumer and sales data is similar to the in-class exercise on Shopco)
+# Management is interested in two variables: (1) if consumers liked a mobile ad before making a 
+# purchase from a shop in a mall, and (2) if consumers checkin at a shop in a mall from 
+# where they made a purchase.
+
+# You are given three tables: consumer, sales, and engagement.
+# Sales data also has a column named liked_shop, it takes a value of 1 if consumers 
+# like a shop and zero otherwise.
+# You can like a shop using Shopco's mobile app.
+
+########################################### PART 1 ###################################################
+
+# Step1: include the packages
+library(sqldf)
+# include other packages here
+library(tidyverse)
+
+# Step2: Set your working directory and load your files
+setwd ("C:/Users/Lucyo/Desktop/461 Data visualization/Assignment 2")
+
+# there are three files engagement, sales and consumer
+
+engagement<-read.csv("engagement.csv",header=TRUE)
+sales<-read.csv("sales.csv",header = TRUE)
+consumer<-read.csv("consumer.csv",header=TRUE)
+
+consumer1 <- consumer %>% group_by(consumer_id) %>% mutate(age1 = max(age)) %>% mutate(loyalty_status1 = max(loyalty_status))
+consumer2 <- consumer1[,c(1,4,5,6)]
+nrow(consumer2)
+consumer3 <- consumer2[!duplicated(consumer2$consumer_id), ]
+nrow(consumer3)
+consumer <- sqldf("select consumer_id, age1 as age, loyalty_status1 as loyalty_status, gender_number from consumer3")
+
+
+# Step3: Understand the tables by using select statement- limit to 5 rows (recall Shopco caselet)
+
+sqldf("select * from engagement limit 5")
+sqldf("select * from sales limit 5")
+sqldf("select * from consumer limit 5")
+
+# Step4: Convert date in sales and engagement tables into (1) date and then (2) character datatype 
+# (recall RFM caselet)
+# Hint: check for the correct format of date
+
+# 1 point for correct date conversion
+
+
+#date
+engagement$date<-as.Date(engagement$date,'%m/%d/%Y')
+class(engagement$date)
+sales$date<-as.Date(sales$date,'%m/%d/%Y')
+class(sales$date)
+
+
+#character
+engagement$date<-as.character(engagement$date)
+class(engagement$date)
+sales$date<-as.character(sales$date)
+class(sales$date)
+
+
+
+# Step5: Now, you need to merge/ join sales and consumer table.
+# Select following columns: trx_id, consumer_id, date, sales_amount, shop_id, mall_id, liked_shop,
+# age, loyalty_status, gender_number
+
+# 1 point for correct query
+
+sales<- sqldf(" 
+              # write your query here
+              ")
+
+sales<- sqldf("select trx_id, sales.consumer_id, date, sales_amount, shop_id, mall_id, liked_shop, age, loyalty_status, gender_number from sales join consumer on sales.consumer_id = consumer.consumer_id")
+sqldf("select * from sales limit 5")
+
+head(sales)
+
+
+# Step6: Add a new column to the previous table that specifies: whether a consumer liked an ad 
+# ON THE DATE OF PURCHASE or not
+# Please note that the ads are sent by a shop in a mall
+# rename this new column as 'liked_add0'
+# Hint 1: use yes_no from the engagement table
+# Hint 2: you will use left join with common columns as consumer id, date, shop and mall
+
+# 2 point for correct query
+
+sales_new<- sqldf("
+                  # write your query here
+                  ")
+
+sales_new<- sqldf("select trx_id, sales.consumer_id, sales.date,sales_amount,
+                  sales.shop_id,sales.mall_id,liked_shop,age,loyalty_status, gender_number, yes_no as liked_add0 
+                  from sales left join engagement 
+                  on sales.consumer_id = engagement.consumer_id and 
+                  sales.date = engagement.date and 
+                  sales.shop_id = engagement.shop_id and 
+                  sales.mall_id = engagement.mall_id 
+                  where engagement_type = 'liked_add'")
+
+sqldf("select * from sales_new limit 5")
+nrow(sales_new)
+
+
+# Step7: Add a new column to the previous table that specifies: whether a consumer checkins
+# at a shop ON THE DATE OF PURCHASE or not
+# Please note that the checkins can be done at a shop in the mall
+# rename this new column as 'checkin0'
+# Hint 1: use yes_no from the engagement table
+# Hint 2: you will use left join with common columns as consumer id, date, shop and mall
+
+# 1 point for correct query
+
+sales_new<- sqldf("select trx_id, sales_new.consumer_id, sales_new.date,sales_amount,
+                  sales_new.shop_id,sales_new.mall_id,liked_shop,age,loyalty_status, gender_number, liked_add0, yes_no as checkin0 
+                  from sales_new left join engagement 
+                  on sales_new.consumer_id = engagement.consumer_id and 
+                  sales_new.date = engagement.date and 
+                  sales_new.shop_id = engagement.shop_id and 
+                  sales_new.mall_id = engagement.mall_id 
+                  where engagement_type = 'checkin'")
+
+sqldf("select * from sales_new limit 5")
+
+
+# Step8: Finally, add a new column to the previous table that specifies: whether a consumer
+# liked an ad ON THE DATE BEFORE PURCHASE or not
+# Please note that the ads are sent by the shops in the mall
+# rename this new column as 'liked_add1'
+# Hint 1: use yes_no from the engagement table
+# Hint 2: you will use left join with common columns as consumer id, date, shop and mall
+# Hint 3: you will have to add a new column to the previous table,i.e., date-1
+
+# 1 point for correctly calculating the date
+
+sales_new$date1<-as.Date(sales_new$date, "%Y-%m-%d")
+sales_new$date1<- sales_new$date1 - 1
+sales_new$date1<-as.character(sales_new$date1)
+
+sqldf("select date1 from sales_new limit 5")
+
+sales_new<- sqldf("select sales_new.consumer_id, sales_new.date, sales_new.shop_id, sales_new.mall_id,
+                  trx_id, sales_amount, liked_shop, age, loyalty_status, gender_number, liked_add0, 
+                  checkin0, date1, yes_no as liked_add1 from sales_new left join engagement on 
+                  sales_new.consumer_id=engagement.consumer_id AND
+                  sales_new.date1=engagement.date AND sales_new.shop_id=engagement.shop_id AND
+                  sales_new.mall_id=engagement.mall_id where engagement_type='liked_add'")
+
+head(sales_new)
+nrow(sales_new)
+
+
+# Now following command is the regression equation where
+# the dependent variable is sales_amount (it is log transformed because it is skewed)
+# There are 7 independent variables: liked_shop, liked_add0, liked_add1, checkin0, age, gender, loyalty status
+# If you have done everything correctly, you should be able to run this regression equation easily
+
+regression<-lm(log(sales_amount+1)~ liked_shop+liked_add0+liked_add1+checkin0+log(1+age)+as.factor(gender_number)+loyalty_status,
+               data=sales_new)
+
+# to see the output of your regression, run command below
+summary(regression) # you can interpret the results using summary() function
+
+########################################### PART 2 ###################################################
+# RFM
+
+# In the second part, create RFM for the consumers of Shopco
+
+# Considering reference date as January 1, 2018, calculate RFM where recency is in days.
+# 3 points for correctly calculation recency, frequency and monetary 
+
+rfm<- sqldf("select consumer_id,
+        date('2018-01-01') as my_date,
+            max(date(date)) as last_purchase,
+            julianday(date('2018-01-02'))-julianday(max(date(date))) as recency, 
+            count(*) as frequency, 
+            sum(sales_amount) as monetary 
+            from sales_new group by consumer_id")
+rfm
+write.csv(sales_new, file="sales_new.csv", row.names=FALSE)
+
+
+
